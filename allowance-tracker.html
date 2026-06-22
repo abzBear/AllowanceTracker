@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kids Allowance Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#0F0F1A;--surface:#1A1A2E;--surface2:#20203A;--border:#2A2A4A;
+  --muted:#94A3B8;--white:#F8FAFC;--subtle:#64748B;
+  --purple:#8B5CF6;--purple-d:#6D28D9;--purple-s:rgba(139,92,246,0.12);
+  --teal:#14B8A6;--teal-d:#0D9488;--teal-s:rgba(20,184,166,0.12);
+  --amber:#F59E0B;--amber-d:#D97706;--amber-s:rgba(245,158,11,0.12);
+  --green:#22C55E;--red:#EF4444;
+  --green-s:rgba(34,197,94,0.12);--red-s:rgba(239,68,68,0.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;min-height:100vh}
+.app-nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:stretch;position:sticky;top:0;z-index:100}
+.nav-logo{font-size:16px;font-weight:800;letter-spacing:-0.5px;padding:14px 16px 14px 0;border-right:1px solid var(--border);margin-right:4px;white-space:nowrap}
+.nav-logo span{color:var(--amber)}
+.nav-tab{padding:14px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap}
+.nav-tab.active{color:var(--white);border-bottom-color:var(--amber)}
+.nav-spacer{flex:1}
+.nav-setup{padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:8px;margin:8px 0;transition:all 0.2s}
+.nav-setup:hover{border-color:var(--amber);color:var(--amber)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--subtle);flex-shrink:0;transition:background 0.3s}
+.sync-dot.ok{background:var(--green)}.sync-dot.err{background:var(--red)}
+.sync-dot.syncing{background:var(--amber);animation:blink 0.8s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.page{display:none;padding:0 0 100px}.page.active{display:block}
+.child-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:12px 16px 0;max-width:640px;margin:0 auto}
+.child-tabs::-webkit-scrollbar{display:none}
+.child-tab{flex:1;min-width:88px;display:flex;flex-direction:column;align-items:center;padding:10px 8px 14px;border-radius:12px 12px 0 0;cursor:pointer;transition:all 0.2s;border:1px solid transparent;border-bottom:none;background:var(--surface2)}
+.child-tab.active.p{background:var(--purple-s);border-color:var(--purple)}
+.child-tab.active.t{background:var(--teal-s);border-color:var(--teal)}
+.child-tab.active.a{background:var(--amber-s);border-color:var(--amber)}
+.tab-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:4px}
+.child-tab.p .tab-avatar{background:var(--purple-s)}.child-tab.t .tab-avatar{background:var(--teal-s)}.child-tab.a .tab-avatar{background:var(--amber-s)}
+.tab-name{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)}
+.child-tab.active.p .tab-name{color:var(--purple)}.child-tab.active.t .tab-name{color:var(--teal)}.child-tab.active.a .tab-name{color:var(--amber)}
+.tab-payout{font-size:15px;font-weight:900;letter-spacing:-0.5px;margin-top:2px;font-variant-numeric:tabular-nums}
+.child-tab.p .tab-payout{color:var(--purple)}.child-tab.t .tab-payout{color:var(--teal)}.child-tab.a .tab-payout{color:var(--amber)}
+.tracker-body{background:var(--surface);border:1px solid var(--border);border-radius:0 0 16px 16px;max-width:608px;margin:0 auto}
+.summary-card{padding:16px 20px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border)}
+.payout-block{display:flex;flex-direction:column}
+.payout-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600}
+.payout-amount{font-size:40px;font-weight:900;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums;transition:all 0.3s}
+.payout-of{font-size:13px;color:var(--muted)}
+.bar-block{flex:1;display:flex;flex-direction:column;gap:8px}
+.prog-bar{height:9px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;transition:width 0.5s cubic-bezier(0.34,1.56,0.64,1)}
+.stat-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.stat-row b{color:var(--white)}
+.section-hdr{display:flex;align-items:center;gap:8px;padding:14px 20px 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.section-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+.miss-badge{background:var(--red-s);color:var(--red);border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700}
+.task-list{padding:0 12px 12px;display:flex;flex-direction:column;gap:6px}
+.task-item{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.15s;user-select:none}
+.task-item:active{transform:scale(0.98)}
+.task-item.done{background:var(--green-s);border-color:rgba(34,197,94,0.25)}
+.task-item.missed{background:var(--red-s);border-color:rgba(239,68,68,0.25)}
+.task-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all 0.15s;background:var(--surface)}
+.task-item.done .task-check{background:var(--green);border-color:var(--green);color:#fff}
+.task-item.missed .task-check{background:var(--red);border-color:var(--red);color:#fff}
+.task-name{font-size:13px;font-weight:600;color:var(--white);line-height:1.3}
+.task-item.missed .task-name{color:var(--muted);text-decoration:line-through}
+.task-freq{font-size:11px;color:var(--muted);margin-top:1px}
+.task-ded{font-size:12px;font-weight:800;flex-shrink:0;font-variant-numeric:tabular-nums}
+.task-item.done .task-ded{color:var(--green)}.task-item.missed .task-ded{color:var(--red)}
+.task-item:not(.done):not(.missed) .task-ded{color:var(--muted)}
+.fab{position:fixed;bottom:0;left:0;right:0;padding:12px 16px 24px;background:linear-gradient(0deg,var(--bg) 55%,transparent);display:flex;gap:10px;max-width:640px;margin:0 auto}
+.btn-ghost{background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-size:13px;font-weight:600;padding:13px 16px;cursor:pointer;transition:all 0.2s}
+.btn-ghost:hover{border-color:var(--red);color:var(--red)}
+.btn-primary{flex:1;border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:800;padding:15px;cursor:pointer;transition:all 0.2s}
+.btn-primary.p{background:linear-gradient(135deg,var(--purple),var(--purple-d))}
+.btn-primary.t{background:linear-gradient(135deg,var(--teal),var(--teal-d))}
+.btn-primary.a{background:linear-gradient(135deg,var(--amber),var(--amber-d))}
+.btn-primary:active{transform:scale(0.98)}
+.hist-header{padding:20px 16px 8px;max-width:640px;margin:0 auto}
+.hist-title{font-size:22px;font-weight:900;letter-spacing:-0.5px;margin-bottom:4px}
+.hist-sub{font-size:13px;color:var(--muted)}
+.child-hist-section{max-width:640px;margin:0 auto;padding:0 16px 20px}
+.child-hist-hdr{display:flex;align-items:center;gap:10px;margin:20px 0 12px}
+.child-hist-hdr-dot{width:10px;height:10px;border-radius:50%}
+.child-hist-hdr-name{font-size:16px;font-weight:800}
+.child-hist-hdr-avg{font-size:12px;color:var(--muted);margin-left:auto}
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;height:180px;position:relative}
+.week-cards{display:flex;flex-direction:column;gap:8px}
+.week-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.week-card-info{flex:1}
+.week-card-date{font-size:13px;font-weight:600}
+.week-card-stats{font-size:11px;color:var(--muted);margin-top:2px}
+.week-card-amount{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+.week-card-pct{font-size:11px;font-weight:600;text-align:right;margin-top:1px}
+.empty-hist{text-align:center;padding:40px 20px;color:var(--muted)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;overflow-y:auto;max-height:92vh;animation:slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h2{font-size:20px;font-weight:900;margin-bottom:6px}
+.modal p{color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:16px}
+.payout-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.payout-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface2);border-radius:10px}
+.payout-row-name{font-size:13px;font-weight:600}
+.payout-row-age{font-size:11px;color:var(--muted);margin-left:4px}
+.payout-row-val{font-size:18px;font-weight:900}
+.modal-btns{display:flex;gap:8px}
+.btn-cancel{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:13px;font-weight:600;padding:13px;cursor:pointer}
+.btn-confirm{flex:2;background:linear-gradient(135deg,var(--green),#16A34A);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:800;padding:13px;cursor:pointer}
+.setup-tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
+.setup-tab{flex:1;padding:10px;font-size:13px;font-weight:600;color:var(--muted);text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface2)}
+.setup-tab.active{background:var(--amber);color:#000}
+.setup-steps{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;font-size:12px;line-height:1.7;color:var(--muted)}
+.setup-steps code{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:11px;color:var(--amber);display:block;margin:6px 0;white-space:pre-wrap;word-break:break-all}
+.setup-steps b{color:var(--white)}
+.copy-btn{display:inline-block;margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--amber);font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer}
+.form-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;display:block}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--white);font-size:14px;padding:12px 14px;margin-bottom:12px;outline:none;font-family:inherit;transition:border-color 0.2s}
+.form-input:focus{border-color:var(--amber)}
+.form-input::placeholder{color:var(--subtle)}
+.editor-child-tabs{display:flex;gap:6px;margin-bottom:16px}
+.editor-child-tab{flex:1;padding:8px 4px;font-size:12px;font-weight:700;text-align:center;border-radius:8px;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:var(--surface2);transition:all 0.2s}
+.editor-child-tab.active.p{background:var(--purple-s);border-color:var(--purple);color:var(--purple)}
+.editor-child-tab.active.t{background:var(--teal-s);border-color:var(--teal);color:var(--teal)}
+.editor-child-tab.active.a{background:var(--amber-s);border-color:var(--amber);color:var(--amber)}
+.editor-section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin:14px 0 8px;display:flex;align-items:center;gap:8px}
+.editor-section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.edit-task-row{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-bottom:6px}
+.edit-task-name{flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--white);background:transparent;border:none;outline:none;font-family:inherit}
+.edit-task-name::placeholder{color:var(--subtle)}
+.edit-task-ded{width:52px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--amber);font-size:12px;font-weight:700;padding:4px 6px;text-align:center;outline:none;font-family:inherit}
+.edit-task-freq{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;padding:4px 6px;outline:none;font-family:inherit;cursor:pointer}
+.edit-task-del{width:26px;height:26px;flex-shrink:0;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.edit-task-del:hover{border-color:var(--red);color:var(--red);background:var(--red-s)}
+.add-task-btn{width:100%;background:var(--surface2);border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-size:13px;font-weight:600;padding:10px;cursor:pointer;transition:all 0.2s;margin-top:2px}
+.add-task-btn:hover{border-color:var(--amber);color:var(--amber)}
+.budget-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.budget-label{font-size:13px;font-weight:600;flex:1}
+.budget-input{width:72px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--amber);font-size:15px;font-weight:800;padding:6px 10px;text-align:center;outline:none;font-family:inherit}
+.save-tasks-btn{width:100%;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:800;padding:14px;cursor:pointer;background:linear-gradient(135deg,var(--green),#16A34A);margin-top:4px}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;z-index:300;transition:opacity 0.3s;white-space:nowrap;pointer-events:none}
+@keyframes popIn{from{transform:translateX(-50%) translateY(8px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+.offline-banner{display:none;background:var(--amber-s);border-bottom:1px solid var(--amber);padding:8px 16px;font-size:12px;font-weight:600;color:var(--amber);text-align:center}
+.offline-banner.show{display:block}
+@media(min-width:480px){.overlay{align-items:center}.modal{border-radius:20px}}
+</style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <div class="nav-logo">🏠 Kids <span>Allowance</span></div>
+  <div class="nav-tab active" onclick="showPage('tracker',this)">This Week</div>
+  <div class="nav-tab" onclick="showPage('history',this)">History</div>
+  <div class="nav-spacer"></div>
+  <div class="nav-setup" onclick="openSetup()">
+    <div class="sync-dot" id="syncDot"></div>
+    <span id="syncLabel">Setup</span>
+  </div>
+</nav>
+<div class="offline-banner" id="offlineBanner">⚠️ Offline — changes saved locally and will sync when reconnected</div>
+
+<div class="page active" id="page-tracker">
+  <div class="child-tabs" id="childTabs"></div>
+  <div class="tracker-body" id="trackerBody"></div>
+</div>
+
+<div class="page" id="page-history">
+  <div class="hist-header">
+    <div class="hist-title">History</div>
+    <div class="hist-sub" id="histSubtitle">No weeks logged yet.</div>
+  </div>
+  <div id="histContent"></div>
+</div>
+
+<div class="fab" id="fab">
+  <button class="btn-ghost" onclick="resetChild()">↺ Reset</button>
+  <button class="btn-primary p" id="endWeekBtn" onclick="openEndWeek()">End Week & Pay Out 💰</button>
+</div>
+
+<!-- END WEEK MODAL -->
+<div class="overlay" id="endWeekOverlay">
+  <div class="modal">
+    <h2>💰 Week complete!</h2>
+    <p>Confirm payouts. This saves to history and resets all tasks for next week.</p>
+    <div class="payout-rows" id="payoutRows"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeOverlay('endWeekOverlay')">Cancel</button>
+      <button class="btn-confirm" onclick="confirmEndWeek()">✓ Confirm & save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP MODAL -->
+<div class="overlay" id="setupOverlay">
+  <div class="modal">
+    <h2>⚙️ Settings</h2>
+    <p style="margin-bottom:14px">Connect your database and manage tasks.</p>
+    <div class="setup-tabs">
+      <div class="setup-tab active" id="stab-db" onclick="switchSetupTab('db')">🗄 Database</div>
+      <div class="setup-tab" id="stab-tasks" onclick="switchSetupTab('tasks')">✏️ Edit Tasks</div>
+    </div>
+
+    <!-- DB PANEL -->
+    <div id="spanel-db">
+      <div class="setup-steps">
+        <b>Step 1 — Create a free project at supabase.com</b><br>
+        Sign up → New project → Settings → API → copy your <b>Project URL</b> and <b>anon public key</b>.<br><br>
+        <b>Step 2 — Run this SQL once in the SQL editor:</b>
+        <code id="sqlCode">create table if not exists app_config (
+  key text primary key,
+  value jsonb not null,
+  updated_at timestamptz default now()
+);
+create table if not exists week_state (
+  id text primary key,
+  week_start text not null,
+  states jsonb not null,
+  updated_at timestamptz default now()
+);
+create table if not exists weeks (
+  id bigserial primary key,
+  week_start text not null,
+  created_at timestamptz default now()
+);
+create table if not exists payouts (
+  id bigserial primary key,
+  week_id bigint references weeks(id),
+  child_id text, child_name text,
+  budget int, deduction_total int,
+  payout int, pct int,
+  created_at timestamptz default now()
+);
+create table if not exists task_logs (
+  id bigserial primary key,
+  week_id bigint references weeks(id),
+  child_id text, task_id text,
+  task_name text, status text,
+  deduction int, category text
+);
+alter table app_config  enable row level security;
+alter table week_state  enable row level security;
+alter table weeks       enable row level security;
+alter table payouts     enable row level security;
+alter table task_logs   enable row level security;
+create policy "all_config"  on app_config  for all using (true) with check (true);
+create policy "all_wstate"  on week_state  for all using (true) with check (true);
+create policy "all_weeks"   on weeks       for all using (true) with check (true);
+create policy "all_payouts" on payouts     for all using (true) with check (true);
+create policy "all_logs"    on task_logs   for all using (true) with check (true);</code>
+        <button class="copy-btn" onclick="copySQL()">Copy SQL</button>
+      </div>
+      <label class="form-label">Supabase project URL</label>
+      <input class="form-input" id="sbUrl" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false">
+      <label class="form-label">Supabase anon key</label>
+      <input class="form-input" id="sbKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off" spellcheck="false">
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeOverlay('setupOverlay')">Cancel</button>
+        <button class="btn-confirm" id="saveSetupBtn" onclick="saveSetup()">Test & save</button>
+      </div>
+      <p style="margin-top:12px;font-size:11px;color:var(--subtle)">Keys stored only in your browser's localStorage — never sent anywhere except Supabase directly.</p>
+    </div>
+
+    <!-- TASKS PANEL -->
+    <div id="spanel-tasks" style="display:none">
+      <div class="editor-child-tabs" id="editorChildTabs"></div>
+      <div id="editorContent"></div>
+      <button class="save-tasks-btn" onclick="saveTasks()">✓ Save & sync tasks</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" style="display:none"></div>
+
+<script>
+// ═══════════════════════════════════
+// COLOURS
+// ═══════════════════════════════════
+const COLORS={p:{main:'#8B5CF6',dark:'#6D28D9'},t:{main:'#14B8A6',dark:'#0D9488'},a:{main:'#F59E0B',dark:'#D97706'}};
+
+// ═══════════════════════════════════
+// DEFAULT CHILDREN (fallback only)
+// ═══════════════════════════════════
+const DEFAULTS=[
+  {id:'child0',name:'Ky-Mani',age:13,emoji:'👦',color:'p',budget:100,
+   chores:[
+    {id:'c0',name:'Wash dishes / stack dishwasher',ded:10,freq:'Daily'},
+    {id:'c1',name:'Vacuum living room & bedrooms',ded:10,freq:'Weekly'},
+    {id:'c2',name:'Clean own bedroom (tidy + dust)',ded:10,freq:'Weekly'},
+    {id:'c3',name:'Take out rubbish & recycling',ded:10,freq:'Weekly'},
+    {id:'c4',name:'Help prepare one meal',ded:8,freq:'Weekly'},
+    {id:'c5',name:'Do own laundry (wash + fold)',ded:10,freq:'Weekly'},
+    {id:'c6',name:'Wipe bathroom basin & toilet',ded:10,freq:'Weekly'},
+    {id:'c7',name:'Feed pets / water plants',ded:5,freq:'Daily'},
+    {id:'c8',name:'Pack school bag & prep uniform',ded:5,freq:'Daily'},
+   ],
+   behaviours:[
+    {id:'b0',name:'No back-chat or rude tone',ded:10,freq:'Daily'},
+    {id:'b1',name:'Screen-free at mealtimes',ded:5,freq:'Daily'},
+    {id:'b2',name:'Complete homework before screen time',ded:5,freq:'Daily'},
+    {id:'b3',name:'Greet adults respectfully',ded:5,freq:'Daily'},
+    {id:'b4',name:"Use 'please' and 'thank you'",ded:5,freq:'Daily'},
+   ]},
+  {id:'child1',name:'Child 2',age:7,emoji:'🧒',color:'t',budget:100,
+   chores:[
+    {id:'c0',name:'Make own bed every morning',ded:15,freq:'Daily'},
+    {id:'c1',name:'Pack away toys after playing',ded:15,freq:'Daily'},
+    {id:'c2',name:'Set the dinner table',ded:10,freq:'Daily'},
+    {id:'c3',name:'Clear own plate after meals',ded:10,freq:'Daily'},
+    {id:'c4',name:'Help sort laundry',ded:10,freq:'Weekly'},
+    {id:'c5',name:'Water garden / indoor plants',ded:5,freq:'Weekly'},
+    {id:'c6',name:'Tidy own room on weekends',ded:10,freq:'Weekly'},
+   ],
+   behaviours:[
+    {id:'b0',name:"Use 'please', 'thank you', 'sorry'",ded:15,freq:'Daily'},
+    {id:'b1',name:'No tantrums or hitting',ded:15,freq:'Daily'},
+    {id:'b2',name:'Share with siblings',ded:10,freq:'Daily'},
+    {id:'b3',name:'Listen the first time',ded:10,freq:'Daily'},
+    {id:'b4',name:'Kind words only',ded:10,freq:'Daily'},
+   ]},
+  {id:'child2',name:'Child 3',age:2,emoji:'👶',color:'a',budget:100,
+   chores:[
+    {id:'c0',name:'Put toys in the toy box',ded:20,freq:'Daily'},
+    {id:'c1',name:'Put dirty clothes in laundry basket',ded:20,freq:'Daily'},
+    {id:'c2',name:'Carry own plate to the counter',ded:15,freq:'Daily'},
+    {id:'c3',name:'Wipe table with cloth (assisted)',ded:15,freq:'Weekly'},
+    {id:'c4',name:'Water one plant with small can',ded:10,freq:'Weekly'},
+   ],
+   behaviours:[
+    {id:'b0',name:"Say 'please' and 'thank you' when prompted",ded:20,freq:'Daily'},
+    {id:'b1',name:'No biting or hitting',ded:20,freq:'Daily'},
+    {id:'b2',name:'Attempt to share toys',ded:15,freq:'Daily'},
+    {id:'b3',name:'Sit nicely at the table during meals',ded:15,freq:'Daily'},
+    {id:'b4',name:'Try new food without a meltdown',ded:10,freq:'Weekly'},
+   ]},
+];
+
+// ═══════════════════════════════════
+// LOCAL STORAGE KEYS
+// ═══════════════════════════════════
+const LS_CHILDREN = 'at_children_v1';
+const LS_STATE    = 'at_state_v1';
+const WEEK_ROW_ID = 'current_week';   // single row in week_state table
+
+// ═══════════════════════════════════
+// RUNTIME STATE
+// ═══════════════════════════════════
+let CHILDREN = loadChildren();
+let weekState = loadWeekState();   // { weekStart, children: {childId: {taskId: 'done'|'missed'}} }
+let activeChild = 0;
+let activeEditorChild = 0;
+let charts = {};
+
+// ═══════════════════════════════════
+// SUPABASE CLIENT
+// ═══════════════════════════════════
+function sbCreds(){return{url:(localStorage.getItem('sb_url')||'').replace(/\/$/,''),key:localStorage.getItem('sb_key')||''};}
+function hasSB(){const{url,key}=sbCreds();return!!(url&&key);}
+function sbH(){const{key}=sbCreds();return{'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+key,'Prefer':'return=representation'};}
+async function sbQ(path,opts={}){
+  const{url}=sbCreds();
+  const res=await fetch(url+'/rest/v1/'+path,{headers:sbH(),...opts});
+  if(!res.ok){const t=await res.text();throw new Error(t);}
+  return res.status===204?null:res.json();
+}
+// Upsert helper (single row)
+async function sbUpsert(table,data){
+  return sbQ(table,{method:'POST',headers:{...sbH(),'Prefer':'return=representation,resolution=merge-duplicates'},body:JSON.stringify(data)});
+}
+
+// ═══════════════════════════════════
+// SYNC STATUS
+// ═══════════════════════════════════
+let _syncTimeout=null;
+function setSync(state){
+  const dot=document.getElementById('syncDot');
+  const lbl=document.getElementById('syncLabel');
+  if(!dot)return;
+  dot.className='sync-dot '+(state==='none'?'':state);
+  lbl.textContent=state==='ok'?'Synced':state==='err'?'Offline':state==='syncing'?'Syncing…':'Setup';
+  const banner=document.getElementById('offlineBanner');
+  if(banner)banner.classList.toggle('show',state==='err');
+}
+function setSyncOk(){setSync('ok');}
+function setSyncErr(){setSync('err');}
+function setSyncBusy(){setSync('syncing');}
+
+// ═══════════════════════════════════
+// CHILDREN CONFIG — load / save / sync
+// ═══════════════════════════════════
+function loadChildren(){
+  try{
+    const s=localStorage.getItem(LS_CHILDREN);
+    if(s)return JSON.parse(s);
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULTS));
+}
+function persistChildren(){
+  localStorage.setItem(LS_CHILDREN,JSON.stringify(CHILDREN));
+}
+async function pushChildren(){
+  if(!hasSB())return;
+  try{
+    await sbUpsert('app_config',{key:'children',value:CHILDREN,updated_at:new Date().toISOString()});
+  }catch(e){setSyncErr();}
+}
+async function pullChildren(){
+  if(!hasSB())return;
+  try{
+    const rows=await sbQ('app_config?key=eq.children&select=value');
+    if(rows&&rows.length){
+      CHILDREN=rows[0].value;
+      persistChildren();
+    }
+  }catch(e){setSyncErr();}
+}
+
+// ═══════════════════════════════════
+// WEEK STATE — load / save / sync
+// ═══════════════════════════════════
+function todayISO(){return new Date().toISOString().split('T')[0];}
+function freshState(){
+  const s={weekStart:todayISO(),children:{}};
+  CHILDREN.forEach(c=>{
+    s.children[c.id]={};
+    [...c.chores,...c.behaviours].forEach(i=>s.children[c.id][i.id]='done');
+  });
+  return s;
+}
+function loadWeekState(){
+  try{
+    const s=localStorage.getItem(LS_STATE);
+    if(s)return JSON.parse(s);
+  }catch(e){}
+  return freshState();
+}
+function persistState(){localStorage.setItem(LS_STATE,JSON.stringify(weekState));}
+
+// Debounced push — avoids hammering Supabase on rapid taps
+function schedulePush(){
+  clearTimeout(_syncTimeout);
+  _syncTimeout=setTimeout(()=>pushWeekState(),800);
+}
+async function pushWeekState(){
+  if(!hasSB())return;
+  setSyncBusy();
+  try{
+    await sbUpsert('week_state',{id:WEEK_ROW_ID,week_start:weekState.weekStart,states:weekState.children,updated_at:new Date().toISOString()});
+    setSyncOk();
+  }catch(e){setSyncErr();}
+}
+async function pullWeekState(){
+  if(!hasSB())return;
+  try{
+    const rows=await sbQ('week_state?id=eq.'+WEEK_ROW_ID+'&select=week_start,states');
+    if(rows&&rows.length){
+      const remote=rows[0];
+      // Only adopt remote if its week_start matches or is newer
+      if(!weekState.weekStart||remote.week_start>=weekState.weekStart){
+        weekState.weekStart=remote.week_start;
+        weekState.children=remote.states;
+        // Ensure any new tasks exist
+        CHILDREN.forEach(c=>{
+          if(!weekState.children[c.id])weekState.children[c.id]={};
+          [...c.chores,...c.behaviours].forEach(i=>{
+            if(!(i.id in weekState.children[c.id]))weekState.children[c.id][i.id]='done';
+          });
+        });
+        persistState();
+      }
+    }
+  }catch(e){setSyncErr();}
+}
+
+// ═══════════════════════════════════
+// CALCULATIONS
+// ═══════════════════════════════════
+function cs(idx){return weekState.children[CHILDREN[idx].id]||{};}
+function calcPayout(idx){
+  const c=CHILDREN[idx],s=cs(idx);
+  const ded=[...c.chores,...c.behaviours].filter(i=>s[i.id]==='missed').reduce((a,i)=>a+i.ded,0);
+  return Math.max(0,c.budget-ded);
+}
+function calcStats(idx){
+  const c=CHILDREN[idx],s=cs(idx);
+  const all=[...c.chores,...c.behaviours];
+  return{done:all.filter(i=>s[i.id]==='done').length,missed:all.filter(i=>s[i.id]==='missed').length,total:all.length};
+}
+function fmtDate(iso){
+  if(!iso)return'';
+  const d=new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'});
+}
+
+// ═══════════════════════════════════
+// RENDER TRACKER
+// ═══════════════════════════════════
+function renderTracker(){
+  renderTabs();renderPanel();
+  document.getElementById('endWeekBtn').className='btn-primary '+CHILDREN[activeChild].color;
+}
+function renderTabs(){
+  let h='';
+  CHILDREN.forEach((c,i)=>{
+    const p=calcPayout(i);
+    h+=`<div class="child-tab ${c.color}${i===activeChild?' active':''}" onclick="switchChild(${i})">
+      <div class="tab-avatar">${c.emoji}</div>
+      <div class="tab-name">${c.name}</div>
+      <div class="tab-payout" id="tabP${i}">R${p}</div>
+    </div>`;
+  });
+  document.getElementById('childTabs').innerHTML=h;
+}
+function renderPanel(){
+  const c=CHILDREN[activeChild],s=cs(activeChild),col=COLORS[c.color];
+  const p=calcPayout(activeChild),st=calcStats(activeChild),pct=Math.round(p/c.budget*100);
+  const choreD=c.chores.filter(i=>s[i.id]==='missed').reduce((a,i)=>a+i.ded,0);
+  const behD=c.behaviours.filter(i=>s[i.id]==='missed').reduce((a,i)=>a+i.ded,0);
+  let h=`<div class="summary-card">
+    <div class="payout-block">
+      <div class="payout-label">This week</div>
+      <div class="payout-amount" id="payAmt" style="color:${col.main}">R${p}</div>
+      <div class="payout-of">of R${c.budget}</div>
+    </div>
+    <div class="bar-block">
+      <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:${pct}%;background:${col.main}"></div></div>
+      <div class="stat-row"><span>✅ <b>${st.done}</b> done</span><span>❌ <b>${st.missed}</b> missed</span><span><b>${pct}%</b></span></div>
+    </div>
+  </div>`;
+  h+=`<div class="section-hdr">🧹 Chores${choreD>0?' <span class="miss-badge">−R'+choreD+'</span>':''}</div><div class="task-list">`;
+  c.chores.forEach(item=>h+=taskHTML(item,s[item.id]||'done',activeChild));
+  h+=`</div><div class="section-hdr">💛 Behaviour${behD>0?' <span class="miss-badge">−R'+behD+'</span>':''}</div><div class="task-list">`;
+  c.behaviours.forEach(item=>h+=taskHTML(item,s[item.id]||'done',activeChild));
+  h+=`</div>`;
+  document.getElementById('trackerBody').innerHTML=h;
+}
+function taskHTML(item,status,ci){
+  const chk=status==='done'?'✓':'✕';
+  const ded=status==='missed'?'−R'+item.ded:'+R'+item.ded;
+  return`<div class="task-item ${status}" onclick="toggle(${ci},'${item.id}')">
+    <div class="task-check">${chk}</div>
+    <div style="flex:1;min-width:0"><div class="task-name">${item.name}</div><div class="task-freq">${item.freq}</div></div>
+    <div class="task-ded">${ded}</div>
+  </div>`;
+}
+function toggle(ci,itemId){
+  const c=CHILDREN[ci];
+  if(!weekState.children[c.id])weekState.children[c.id]={};
+  const s=weekState.children[c.id];
+  s[itemId]=s[itemId]==='done'?'missed':'done';
+  persistState();
+  schedulePush();            // debounced push to Supabase
+  // Fast DOM update
+  const p=calcPayout(ci),pct=Math.round(p/c.budget*100);
+  const pEl=document.getElementById('payAmt');
+  if(pEl){pEl.textContent='R'+p;pEl.style.transform='scale(1.06)';setTimeout(()=>pEl.style.transform='',200);}
+  const bEl=document.getElementById('progFill');if(bEl)bEl.style.width=pct+'%';
+  const tEl=document.getElementById('tabP'+ci);if(tEl)tEl.textContent='R'+p;
+  renderPanel();
+}
+function switchChild(i){activeChild=i;renderTracker();}
+function resetChild(){
+  const c=CHILDREN[activeChild];
+  if(!confirm('Reset all of '+c.name+' to Done?'))return;
+  const fresh=freshState();
+  weekState.children[c.id]=fresh.children[c.id];
+  persistState();schedulePush();renderTracker();
+}
+
+// ═══════════════════════════════════
+// END WEEK
+// ═══════════════════════════════════
+function openEndWeek(){
+  let h='';
+  CHILDREN.forEach((c,i)=>{
+    const p=calcPayout(i),col=COLORS[c.color];
+    h+=`<div class="payout-row"><span class="payout-row-name">${c.emoji} ${c.name}<span class="payout-row-age">Age ${c.age}</span></span><span class="payout-row-val" style="color:${col.main}">R${p}</span></div>`;
+  });
+  document.getElementById('payoutRows').innerHTML=h;
+  openOverlay('endWeekOverlay');
+}
+async function confirmEndWeek(){
+  closeOverlay('endWeekOverlay');
+  if(hasSB()){
+    setSyncBusy();
+    try{
+      const weekRows=await sbQ('weeks',{method:'POST',body:JSON.stringify({week_start:weekState.weekStart||todayISO()})});
+      const weekId=weekRows[0].id;
+      const payoutData=CHILDREN.map((c,i)=>{const p=calcPayout(i);return{week_id:weekId,child_id:c.id,child_name:c.name,budget:c.budget,deduction_total:c.budget-p,payout:p,pct:Math.round(p/c.budget*100)};});
+      await sbQ('payouts',{method:'POST',body:JSON.stringify(payoutData)});
+      const logs=[];
+      CHILDREN.forEach(c=>{
+        const s=weekState.children[c.id]||{};
+        [...c.chores.map(t=>({...t,cat:'chore'})),...c.behaviours.map(t=>({...t,cat:'behaviour'}))].forEach(t=>{
+          logs.push({week_id:weekId,child_id:c.id,task_id:t.id,task_name:t.name,status:s[t.id]||'done',deduction:t.ded,category:t.cat});
+        });
+      });
+      await sbQ('task_logs',{method:'POST',body:JSON.stringify(logs)});
+      setSyncOk();showToast('✅ Week saved!');
+    }catch(e){setSyncErr();saveHistoryLocal();showToast('⚠️ Saved locally (will retry)');}
+  }else{
+    saveHistoryLocal();showToast('💾 Saved locally');
+  }
+  // Advance week
+  const next=new Date((weekState.weekStart||todayISO())+'T00:00:00');
+  next.setDate(next.getDate()+7);
+  weekState=freshState();
+  weekState.weekStart=next.toISOString().split('T')[0];
+  persistState();
+  // Clear week_state row in DB
+  if(hasSB())pushWeekState();
+  renderTracker();
+}
+function saveHistoryLocal(){
+  const hist=JSON.parse(localStorage.getItem('at_history')||'[]');
+  CHILDREN.forEach((c,i)=>{
+    const p=calcPayout(i),st=calcStats(i);
+    hist.push({weekStart:weekState.weekStart||todayISO(),child_id:c.id,child_name:c.name,budget:c.budget,payout:p,pct:Math.round(p/c.budget*100),done:st.done,missed:st.missed});
+  });
+  localStorage.setItem('at_history',JSON.stringify(hist));
+}
+
+// ═══════════════════════════════════
+// HISTORY PAGE
+// ═══════════════════════════════════
+async function loadHistory(){
+  if(!hasSB()){renderHistoryLocal();return;}
+  setSyncBusy();
+  try{
+    const data=await sbQ('payouts?select=*,weeks(week_start)&order=created_at.desc&limit=100');
+    setSyncOk();renderHistoryDB(data);
+  }catch(e){setSyncErr();renderHistoryLocal();}
+}
+function groupByChild(rows){const m={};rows.forEach(r=>{if(!m[r.child_id])m[r.child_id]=[];m[r.child_id].push(r);});return m;}
+function renderHistoryDB(rows){
+  if(!rows||!rows.length){renderEmptyHistory();return;}
+  const byChild=groupByChild(rows);
+  const wks=new Set(rows.map(r=>r.week_id)).size;
+  document.getElementById('histSubtitle').textContent=wks+' week'+(wks!==1?'s':'')+' tracked across '+CHILDREN.length+' children';
+  let h='';
+  CHILDREN.forEach(c=>{
+    const recs=(byChild[c.id]||[]).map(r=>({week:r.weeks?.week_start||'?',payout:r.payout,pct:r.pct,done:null,missed:null,budget:r.budget}));
+    if(!recs.length)return;
+    h+=childHistHTML(c,recs);
+  });
+  document.getElementById('histContent').innerHTML=h||'<div class="empty-hist">No history yet.</div>';
+  setTimeout(()=>CHILDREN.forEach(c=>drawChart(c,(groupByChild(rows)[c.id]||[]).map(r=>({week_start:r.weeks?.week_start||'',payout:r.payout})))),50);
+}
+function renderHistoryLocal(){
+  const rows=JSON.parse(localStorage.getItem('at_history')||'[]');
+  if(!rows.length){renderEmptyHistory();return;}
+  const byChild=groupByChild(rows);
+  const wks=new Set(rows.map(r=>r.weekStart)).size;
+  document.getElementById('histSubtitle').textContent=wks+' week'+(wks!==1?'s':'')+' (local — connect Supabase to sync)';
+  let h='';
+  CHILDREN.forEach(c=>{
+    const recs=(byChild[c.id]||[]).map(r=>({week:r.weekStart||'?',payout:r.payout,pct:r.pct,done:r.done,missed:r.missed,budget:r.budget}));
+    if(!recs.length)return;
+    h+=childHistHTML(c,recs);
+  });
+  document.getElementById('histContent').innerHTML=h||'<div class="empty-hist">No history yet.</div>';
+  setTimeout(()=>CHILDREN.forEach(c=>drawChart(c,(byChild[c.id]||[]).map(r=>({week_start:r.weekStart,payout:r.payout})))),50);
+}
+function renderEmptyHistory(){
+  document.getElementById('histSubtitle').textContent='No weeks logged yet.';
+  document.getElementById('histContent').innerHTML='<div class="empty-hist"><p>End your first week to see history here.</p></div>';
+}
+function childHistHTML(c,records){
+  const col=COLORS[c.color];
+  const avg=Math.round(records.reduce((s,r)=>s+r.payout,0)/records.length);
+  let h=`<div class="child-hist-section"><div class="child-hist-hdr"><div class="child-hist-hdr-dot" style="background:${col.main}"></div><div class="child-hist-hdr-name">${c.emoji} ${c.name}</div><div class="child-hist-hdr-avg">Avg R${avg}/wk</div></div>
+    <div class="chart-wrap"><canvas id="chart_${c.id}" role="img" aria-label="Payout trend for ${c.name}">Payout trend.</canvas></div><div class="week-cards">`;
+  records.slice(0,8).forEach(r=>{
+    const pc=r.pct>=90?'var(--green)':r.pct>=60?col.main:'var(--red)';
+    h+=`<div class="week-card"><div style="width:42px;height:42px;border-radius:50%;background:${col.main}22;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${c.emoji}</div>
+      <div class="week-card-info"><div class="week-card-date">${fmtDate(r.week)}</div><div class="week-card-stats">${r.done!==null?'✅ '+r.done+' done · ❌ '+r.missed+' missed':'R'+r.budget+' budget'}</div></div>
+      <div style="text-align:right"><div class="week-card-amount" style="color:${col.main}">R${r.payout}</div><div class="week-card-pct" style="color:${pc}">${r.pct}%</div></div></div>`;
+  });
+  h+=`</div></div>`;
+  return h;
+}
+function drawChart(c,rows){
+  const canvas=document.getElementById('chart_'+c.id);if(!canvas)return;
+  if(charts[c.id])charts[c.id].destroy();
+  const sorted=[...rows].sort((a,b)=>a.week_start<b.week_start?-1:1).slice(-10);
+  const col=COLORS[c.color];
+  charts[c.id]=new Chart(canvas,{type:'line',
+    data:{labels:sorted.map(r=>fmtDate(r.week_start)),datasets:[{label:'Payout',data:sorted.map(r=>r.payout),borderColor:col.main,backgroundColor:col.main+'22',fill:true,tension:0.4,pointBackgroundColor:col.main,pointRadius:4,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'R'+ctx.parsed.y}}},
+      scales:{y:{min:0,max:105,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#64748B',callback:v=>'R'+v,font:{size:10}}},x:{grid:{display:false},ticks:{color:'#64748B',font:{size:10},maxRotation:30}}}}});
+}
+
+// ═══════════════════════════════════
+// SETUP MODAL
+// ═══════════════════════════════════
+function openSetup(){
+  const{url,key}=sbCreds();
+  document.getElementById('sbUrl').value=url;
+  document.getElementById('sbKey').value=key;
+  switchSetupTab('db');
+  openOverlay('setupOverlay');
+}
+function switchSetupTab(tab){
+  document.getElementById('spanel-db').style.display=tab==='db'?'block':'none';
+  document.getElementById('spanel-tasks').style.display=tab==='tasks'?'block':'none';
+  document.getElementById('stab-db').classList.toggle('active',tab==='db');
+  document.getElementById('stab-tasks').classList.toggle('active',tab==='tasks');
+  if(tab==='tasks')renderTaskEditor(activeEditorChild);
+}
+async function saveSetup(){
+  const url=document.getElementById('sbUrl').value.trim().replace(/\/$/,'');
+  const key=document.getElementById('sbKey').value.trim();
+  if(!url||!key){showToast('Please fill in both fields');return;}
+  const btn=document.getElementById('saveSetupBtn');
+  btn.textContent='Testing…';btn.disabled=true;
+  try{
+    const res=await fetch(url+'/rest/v1/weeks?limit=1',{headers:{'apikey':key,'Authorization':'Bearer '+key}});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    localStorage.setItem('sb_url',url);localStorage.setItem('sb_key',key);
+    setSyncOk();
+    closeOverlay('setupOverlay');
+    showToast('✅ Connected!');
+    // Initial full sync
+    await pullChildren();
+    await pullWeekState();
+    renderTracker();
+  }catch(e){showToast('❌ Connection failed — check URL and key');}
+  finally{btn.textContent='Test & save';btn.disabled=false;}
+}
+function copySQL(){
+  navigator.clipboard.writeText(document.getElementById('sqlCode').textContent)
+    .then(()=>showToast('SQL copied!'))
+    .catch(()=>showToast('Select the SQL above and copy manually'));
+}
+
+// ═══════════════════════════════════
+// TASK EDITOR
+// ═══════════════════════════════════
+function switchEditorChild(i){activeEditorChild=i;renderTaskEditor(i);}
+function renderTaskEditor(ci){
+  let tabs='';
+  CHILDREN.forEach((c,i)=>{
+    tabs+=`<div class="editor-child-tab ${c.color}${i===ci?' active':''}" onclick="switchEditorChild(${i})">${c.emoji} ${c.name}</div>`;
+  });
+  document.getElementById('editorChildTabs').innerHTML=tabs;
+  const c=CHILDREN[ci];
+  let h=`<div class="budget-row"><div class="budget-label">Weekly budget (R)</div><input class="budget-input" id="editBudget" type="number" min="1" max="9999" value="${c.budget}"></div>`;
+  h+=`<div class="editor-section-label">🧹 Chores</div>`;
+  c.chores.forEach((item,idx)=>h+=editRow('chore',ci,idx,item));
+  h+=`<button class="add-task-btn" onclick="addTask(${ci},'chore')">+ Add chore</button>`;
+  h+=`<div class="editor-section-label" style="margin-top:16px">💛 Behaviour</div>`;
+  c.behaviours.forEach((item,idx)=>h+=editRow('behaviour',ci,idx,item));
+  h+=`<button class="add-task-btn" onclick="addTask(${ci},'behaviour')">+ Add behaviour</button>`;
+  document.getElementById('editorContent').innerHTML=h;
+}
+function editRow(type,ci,idx,item){
+  const safeName=item.name.replace(/"/g,'&quot;');
+  return`<div class="edit-task-row">
+    <input class="edit-task-name" type="text" value="${safeName}" placeholder="Task name" id="en_${type}_${ci}_${idx}">
+    <select class="edit-task-freq" id="ef_${type}_${ci}_${idx}">
+      <option value="Daily"${item.freq==='Daily'?' selected':''}>Daily</option>
+      <option value="Weekly"${item.freq==='Weekly'?' selected':''}>Weekly</option>
+    </select>
+    <input class="edit-task-ded" type="number" min="0" max="999" value="${item.ded}" id="ed_${type}_${ci}_${idx}" title="Deduction (R)">
+    <button class="edit-task-del" onclick="deleteTask(${ci},'${type}',${idx})" title="Delete">✕</button>
+  </div>`;
+}
+function addTask(ci,type){
+  const list=type==='chore'?CHILDREN[ci].chores:CHILDREN[ci].behaviours;
+  list.push({id:(type==='chore'?'c':'b')+'_'+Date.now(),name:'',ded:5,freq:'Daily'});
+  renderTaskEditor(ci);
+  setTimeout(()=>{
+    const el=document.getElementById('en_'+type+'_'+ci+'_'+(list.length-1));
+    if(el)el.focus();
+  },50);
+}
+function deleteTask(ci,type,idx){
+  const list=type==='chore'?CHILDREN[ci].chores:CHILDREN[ci].behaviours;
+  if(list.length<=1){showToast('Must keep at least one item');return;}
+  list.splice(idx,1);
+  renderTaskEditor(ci);
+}
+function readEditorIntoChildren(){
+  // Read the currently visible editor tab back into CHILDREN
+  const ci=activeEditorChild;
+  const c=CHILDREN[ci];
+  const budgetEl=document.getElementById('editBudget');
+  if(budgetEl){const v=parseInt(budgetEl.value,10);if(!isNaN(v)&&v>0)c.budget=v;}
+  ['chore','behaviour'].forEach(type=>{
+    const list=type==='chore'?c.chores:c.behaviours;
+    const updated=list.map((item,idx)=>{
+      const n=document.getElementById('en_'+type+'_'+ci+'_'+idx);
+      const d=document.getElementById('ed_'+type+'_'+ci+'_'+idx);
+      const f=document.getElementById('ef_'+type+'_'+ci+'_'+idx);
+      if(!n)return item;
+      return{...item,name:n.value.trim()||item.name,ded:parseInt(d.value,10)||item.ded,freq:f.value};
+    }).filter(i=>i.name);
+    if(type==='chore')c.chores=updated;else c.behaviours=updated;
+  });
+}
+async function saveTasks(){
+  readEditorIntoChildren();
+  persistChildren();
+  // Ensure week state has entries for any new task ids
+  CHILDREN.forEach(c=>{
+    if(!weekState.children[c.id])weekState.children[c.id]={};
+    [...c.chores,...c.behaviours].forEach(i=>{
+      if(!(i.id in weekState.children[c.id]))weekState.children[c.id][i.id]='done';
+    });
+  });
+  persistState();
+  closeOverlay('setupOverlay');
+  renderTracker();
+  // Push both to Supabase
+  if(hasSB()){
+    setSyncBusy();
+    try{
+      await pushChildren();
+      await pushWeekState();
+      setSyncOk();showToast('✅ Tasks saved & synced!');
+    }catch(e){setSyncErr();showToast('💾 Saved locally — sync failed');}
+  }else{
+    showToast('✅ Tasks saved!');
+  }
+}
+
+// ═══════════════════════════════════
+// NAV / UTILS
+// ═══════════════════════════════════
+function showPage(p,el){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(e=>e.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(el)el.classList.add('active');
+  document.getElementById('fab').style.display=p==='tracker'?'flex':'none';
+  if(p==='history')loadHistory();
+}
+function openOverlay(id){document.getElementById(id).classList.add('open');}
+function closeOverlay(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
+let _toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.display='block';t.style.opacity='1';t.style.animation='popIn 0.25s ease';
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.style.display='none',300);},2800);
+}
+
+// ═══════════════════════════════════
+// INIT — pull latest from Supabase then render
+// ═══════════════════════════════════
+async function init(){
+  renderTracker(); // render immediately from local state
+  if(hasSB()){
+    setSyncBusy();
+    try{
+      await pullChildren();      // get latest task config
+      await pullWeekState();     // get latest tick/miss state
+      CHILDREN=loadChildren();   // reload after pull
+      weekState=loadWeekState(); // reload after pull
+      renderTracker();           // re-render with fresh data
+      setSyncOk();
+    }catch(e){setSyncErr();}
+  }
+}
+init();
+</script>
+</body>
+</html>
