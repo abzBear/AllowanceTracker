@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Kids Allowance Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="config.js"></script>
 <style>
 :root{
   --bg:#0F0F1A;--surface:#1A1A2E;--surface2:#20203A;--border:#2A2A4A;
@@ -154,7 +155,7 @@ body{background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacS
   <div class="nav-tab active" onclick="showPage('tracker',this)">This Week</div>
   <div class="nav-tab" onclick="showPage('history',this)">History</div>
   <div class="nav-spacer"></div>
-  <div class="nav-setup" onclick="openSetup()">
+  <div class="nav-setup" id="navSetup" onclick="openSetup()">
     <div class="sync-dot" id="syncDot"></div>
     <span id="syncLabel">Setup</span>
   </div>
@@ -192,89 +193,26 @@ body{background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacS
   </div>
 </div>
 
-<!-- SETUP MODAL -->
+<!-- SETUP MODAL (Tasks only — DB credentials live in config.js) -->
 <div class="overlay" id="setupOverlay">
   <div class="modal">
-    <h2>⚙️ Settings</h2>
-    <p style="margin-bottom:14px">Connect your database and manage tasks.</p>
-    <div class="setup-tabs">
-      <div class="setup-tab active" id="stab-db" onclick="switchSetupTab('db')">🗄 Database</div>
-      <div class="setup-tab" id="stab-tasks" onclick="switchSetupTab('tasks')">✏️ Edit Tasks</div>
-    </div>
-
-    <!-- DB PANEL -->
-    <div id="spanel-db">
-      <div class="setup-steps">
-        <b>Step 1 — Create a free project at supabase.com</b><br>
-        Sign up → New project, then find your keys in one of two places:<br>
-        • <b>New projects (2026):</b> Settings → API Keys → copy <b>Project URL</b> and the <b>Publishable key</b> (starts with <b>sb_publishable_</b>)<br>
-        • <b>Older projects:</b> Settings → API → copy <b>Project URL</b> and the <b>anon public</b> key (starts with <b>eyJ</b>)<br><br>
-        <b>Step 2 — Run this SQL once in the SQL editor:</b>
-        <code id="sqlCode">create table if not exists app_config (
-  key text primary key,
-  value jsonb not null,
-  updated_at timestamptz default now()
-);
-create table if not exists week_state (
-  id text primary key,
-  week_start text not null,
-  states jsonb not null,
-  updated_at timestamptz default now()
-);
-create table if not exists weeks (
-  id bigserial primary key,
-  week_start text not null,
-  created_at timestamptz default now()
-);
-create table if not exists payouts (
-  id bigserial primary key,
-  week_id bigint references weeks(id),
-  child_id text, child_name text,
-  budget int, deduction_total int,
-  payout int, pct int,
-  created_at timestamptz default now()
-);
-create table if not exists task_logs (
-  id bigserial primary key,
-  week_id bigint references weeks(id),
-  child_id text, task_id text,
-  task_name text, status text,
-  deduction int, category text
-);
-alter table app_config  enable row level security;
-alter table week_state  enable row level security;
-alter table weeks       enable row level security;
-alter table payouts     enable row level security;
-alter table task_logs   enable row level security;
-create policy "all_config"  on app_config  for all using (true) with check (true);
-create policy "all_wstate"  on week_state  for all using (true) with check (true);
-create policy "all_weeks"   on weeks       for all using (true) with check (true);
-create policy "all_payouts" on payouts     for all using (true) with check (true);
-create policy "all_logs"    on task_logs   for all using (true) with check (true);</code>
-        <button class="copy-btn" onclick="copySQL()">Copy SQL</button>
-      </div>
-      <label class="form-label">Supabase project URL</label>
-      <input class="form-input" id="sbUrl" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false">
-      <label class="form-label">Supabase anon key</label>
-      <input class="form-input" id="sbKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off" spellcheck="false">
-      <div class="modal-btns">
-        <button class="btn-cancel" onclick="closeOverlay('setupOverlay')">Cancel</button>
-        <button class="btn-confirm" id="saveSetupBtn" onclick="saveSetup()">Test & save</button>
-      </div>
-      <p style="margin-top:12px;font-size:11px;color:var(--subtle)">Keys stored only in your browser's localStorage — never sent anywhere except Supabase directly.</p>
-    </div>
-
-    <!-- TASKS PANEL -->
-    <div id="spanel-tasks" style="display:none">
-      <div class="editor-child-tabs" id="editorChildTabs"></div>
-      <div id="editorContent"></div>
-      <button class="save-tasks-btn" onclick="saveTasks()">✓ Save & sync tasks</button>
-    </div>
+    <h2>✏️ Edit Tasks</h2>
+    <p style="margin-bottom:14px">Manage chores and behaviour items for each child.</p>
+    <div class="editor-child-tabs" id="editorChildTabs"></div>
+    <div id="editorContent"></div>
+    <button class="save-tasks-btn" onclick="saveTasks()">✓ Save &amp; sync tasks</button>
   </div>
-</div>
+</div></div>
 
 <div class="toast" id="toast" style="display:none"></div>
 
+<script>
+// ═══════════════════════════════════
+// CONFIG — loaded from config.js if available, otherwise empty
+// ═══════════════════════════════════
+if(typeof SUPABASE_URL==='undefined')window.SUPABASE_URL='';
+if(typeof SUPABASE_KEY==='undefined')window.SUPABASE_KEY='';
+</script>
 <script>
 // ═══════════════════════════════════
 // COLOURS
@@ -358,8 +296,12 @@ let charts = {};
 // SUPABASE CLIENT
 // ═══════════════════════════════════
 function sbCreds(){
-  const raw=(localStorage.getItem('sb_url')||'').trim().replace(/\/rest\/v1\/?$/,'').replace(/\/$/,'');
-  return{url:raw,key:localStorage.getItem('sb_key')||''};
+  // Priority: config.js constants > localStorage (allows runtime override)
+  const cfgUrl=(window.SUPABASE_URL||'').trim().replace(/\/rest\/v1\/?$/,'').replace(/\/$/,'');
+  const cfgKey=(window.SUPABASE_KEY||'').trim();
+  const lsUrl=(localStorage.getItem('sb_url')||'').trim().replace(/\/rest\/v1\/?$/,'').replace(/\/$/,'');
+  const lsKey=(localStorage.getItem('sb_key')||'').trim();
+  return{url:cfgUrl||lsUrl, key:cfgKey||lsKey};
 }function hasSB(){const{url,key}=sbCreds();return!!(url&&key);}
 // New sb_publishable_... keys must NOT be sent in Authorization: Bearer (Supabase rejects it).
 // Legacy JWT anon keys (eyJ...) still need both headers.
@@ -714,48 +656,10 @@ function drawChart(c,rows){
 // SETUP MODAL
 // ═══════════════════════════════════
 function openSetup(){
-  const{url,key}=sbCreds();
-  document.getElementById('sbUrl').value=url;
-  document.getElementById('sbKey').value=key;
-  switchSetupTab('db');
+  renderTaskEditor(activeEditorChild);
   openOverlay('setupOverlay');
 }
-function switchSetupTab(tab){
-  document.getElementById('spanel-db').style.display=tab==='db'?'block':'none';
-  document.getElementById('spanel-tasks').style.display=tab==='tasks'?'block':'none';
-  document.getElementById('stab-db').classList.toggle('active',tab==='db');
-  document.getElementById('stab-tasks').classList.toggle('active',tab==='tasks');
-  if(tab==='tasks')renderTaskEditor(activeEditorChild);
-}
-async function saveSetup(){
-  // Strip any accidental /rest/v1, /rest/v1/, or trailing slashes the user may have copied
-  const url=document.getElementById('sbUrl').value.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/$/,'');
-  const key=document.getElementById('sbKey').value.trim();
-  if(!url||!key){showToast('Please fill in both fields');return;}
-  const btn=document.getElementById('saveSetupBtn');
-  btn.textContent='Testing…';btn.disabled=true;
-  try{
-    const isLegacy=key.startsWith('eyJ');
-    const testHeaders={'apikey':key};
-    if(isLegacy)testHeaders['Authorization']='Bearer '+key;
-    const res=await fetch(url+'/rest/v1/weeks?limit=1',{headers:testHeaders});
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    localStorage.setItem('sb_url',url);localStorage.setItem('sb_key',key);
-    setSyncOk();
-    closeOverlay('setupOverlay');
-    showToast('✅ Connected!');
-    // Initial full sync
-    await pullChildren();
-    await pullWeekState();
-    renderTracker();
-  }catch(e){showToast('❌ Connection failed — check URL and key');}
-  finally{btn.textContent='Test & save';btn.disabled=false;}
-}
-function copySQL(){
-  navigator.clipboard.writeText(document.getElementById('sqlCode').textContent)
-    .then(()=>showToast('SQL copied!'))
-    .catch(()=>showToast('Select the SQL above and copy manually'));
-}
+
 
 // ═══════════════════════════════════
 // TASK EDITOR
@@ -875,16 +779,20 @@ function showToast(msg){
 // ═══════════════════════════════════
 async function init(){
   renderTracker(); // render immediately from local state
+  // Show/hide the nav setup button based on whether credentials are configured
+  const navSetup=document.getElementById('navSetup');
+  if(hasSB()&&navSetup)navSetup.style.display='none';
   if(hasSB()){
     setSyncBusy();
     try{
-      await pullChildren();      // get latest task config
-      await pullWeekState();     // get latest tick/miss state
-      CHILDREN=loadChildren();   // reload after pull
-      weekState=loadWeekState(); // reload after pull
-      renderTracker();           // re-render with fresh data
+      await pullChildren();
+      await pullWeekState();
+      CHILDREN=loadChildren();
+      weekState=loadWeekState();
+      renderTracker();
       setSyncOk();
-    }catch(e){setSyncErr();}
+      if(navSetup)navSetup.style.display='none';
+    }catch(e){setSyncErr();if(navSetup)navSetup.style.display='';}
   }
 }
 init();
