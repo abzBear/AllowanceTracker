@@ -339,7 +339,7 @@ function setSync(state){
   const lbl=document.getElementById('syncLabel');
   if(!dot)return;
   dot.className='sync-dot '+(state==='none'?'':state);
-  lbl.textContent=state==='ok'?'Synced':state==='err'?'Offline':state==='syncing'?'Syncing…':'Setup';
+  lbl.textContent=state==='err'?'Offline':state==='syncing'?'Syncing…':hasSB()?'Edit Tasks':'Setup';
   const banner=document.getElementById('offlineBanner');
   if(banner)banner.classList.toggle('show',state==='err');
 }
@@ -779,9 +779,9 @@ function showToast(msg){
 // ═══════════════════════════════════
 async function init(){
   renderTracker(); // render immediately from local state
-  // Show/hide the nav setup button based on whether credentials are configured
-  const navSetup=document.getElementById('navSetup');
-  if(hasSB()&&navSetup)navSetup.style.display='none';
+  // Button is always visible — label changes to reflect connection state
+  const lbl=document.getElementById('syncLabel');
+  if(lbl)lbl.textContent=hasSB()?'Edit Tasks':'Setup';
   if(hasSB()){
     setSyncBusy();
     try{
@@ -791,8 +791,7 @@ async function init(){
       weekState=loadWeekState();
       renderTracker();
       setSyncOk();
-      if(navSetup)navSetup.style.display='none';
-    }catch(e){setSyncErr();if(navSetup)navSetup.style.display='';}
+    }catch(e){setSyncErr();}
   }
 }
 init();
