@@ -17,4 +17,4 @@ var SUPABASE_KEY = 'sb_publishable_kdT7WseL_19XdEqrTGU35A_S-_CxctX';
 // 4-digit PIN to unlock the parent view.
 // Change this if the kids ever figure it out.
 // Must be a string of exactly 4 digits.
-var PARENT_PIN = '250484';
+var PARENT_PIN = '2988';
