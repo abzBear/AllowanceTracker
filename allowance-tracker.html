@@ -357,8 +357,10 @@ let charts = {};
 // ═══════════════════════════════════
 // SUPABASE CLIENT
 // ═══════════════════════════════════
-function sbCreds(){return{url:(localStorage.getItem('sb_url')||'').replace(/\/$/,''),key:localStorage.getItem('sb_key')||''};}
-function hasSB(){const{url,key}=sbCreds();return!!(url&&key);}
+function sbCreds(){
+  const raw=(localStorage.getItem('sb_url')||'').trim().replace(/\/rest\/v1\/?$/,'').replace(/\/$/,'');
+  return{url:raw,key:localStorage.getItem('sb_key')||''};
+}function hasSB(){const{url,key}=sbCreds();return!!(url&&key);}
 // New sb_publishable_... keys must NOT be sent in Authorization: Bearer (Supabase rejects it).
 // Legacy JWT anon keys (eyJ...) still need both headers.
 function sbH(extraPrefer){
@@ -726,7 +728,8 @@ function switchSetupTab(tab){
   if(tab==='tasks')renderTaskEditor(activeEditorChild);
 }
 async function saveSetup(){
-  const url=document.getElementById('sbUrl').value.trim().replace(/\/$/,'');
+  // Strip any accidental /rest/v1, /rest/v1/, or trailing slashes the user may have copied
+  const url=document.getElementById('sbUrl').value.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/$/,'');
   const key=document.getElementById('sbKey').value.trim();
   if(!url||!key){showToast('Please fill in both fields');return;}
   const btn=document.getElementById('saveSetupBtn');
