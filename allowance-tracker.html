@@ -206,7 +206,9 @@ body{background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacS
     <div id="spanel-db">
       <div class="setup-steps">
         <b>Step 1 — Create a free project at supabase.com</b><br>
-        Sign up → New project → Settings → API → copy your <b>Project URL</b> and <b>anon public key</b>.<br><br>
+        Sign up → New project, then find your keys in one of two places:<br>
+        • <b>New projects (2026):</b> Settings → API Keys → copy <b>Project URL</b> and the <b>Publishable key</b> (starts with <b>sb_publishable_</b>)<br>
+        • <b>Older projects:</b> Settings → API → copy <b>Project URL</b> and the <b>anon public</b> key (starts with <b>eyJ</b>)<br><br>
         <b>Step 2 — Run this SQL once in the SQL editor:</b>
         <code id="sqlCode">create table if not exists app_config (
   key text primary key,
@@ -357,16 +359,31 @@ let charts = {};
 // ═══════════════════════════════════
 function sbCreds(){return{url:(localStorage.getItem('sb_url')||'').replace(/\/$/,''),key:localStorage.getItem('sb_key')||''};}
 function hasSB(){const{url,key}=sbCreds();return!!(url&&key);}
-function sbH(){const{key}=sbCreds();return{'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+key,'Prefer':'return=representation'};}
+// New sb_publishable_... keys must NOT be sent in Authorization: Bearer (Supabase rejects it).
+// Legacy JWT anon keys (eyJ...) still need both headers.
+function sbH(extraPrefer){
+  const{key}=sbCreds();
+  const isLegacyJWT=key.startsWith('eyJ');
+  const h={'Content-Type':'application/json','apikey':key,'Prefer':extraPrefer||'return=representation'};
+  if(isLegacyJWT)h['Authorization']='Bearer '+key;
+  return h;
+}
 async function sbQ(path,opts={}){
   const{url}=sbCreds();
-  const res=await fetch(url+'/rest/v1/'+path,{headers:sbH(),...opts});
+  const callerHeaders=opts.headers||{};
+  const base=sbH(callerHeaders['Prefer']);
+  const merged={...base,...callerHeaders};
+  const{headers:_,...rest}=opts;
+  const res=await fetch(url+'/rest/v1/'+path,{headers:merged,...rest});
   if(!res.ok){const t=await res.text();throw new Error(t);}
   return res.status===204?null:res.json();
 }
-// Upsert helper (single row)
 async function sbUpsert(table,data){
-  return sbQ(table,{method:'POST',headers:{...sbH(),'Prefer':'return=representation,resolution=merge-duplicates'},body:JSON.stringify(data)});
+  const{url}=sbCreds();
+  const h=sbH('return=representation,resolution=merge-duplicates');
+  const res=await fetch(url+'/rest/v1/'+table,{method:'POST',headers:h,body:JSON.stringify(data)});
+  if(!res.ok){const t=await res.text();throw new Error(t);}
+  return res.status===204?null:res.json();
 }
 
 // ═══════════════════════════════════
@@ -715,7 +732,10 @@ async function saveSetup(){
   const btn=document.getElementById('saveSetupBtn');
   btn.textContent='Testing…';btn.disabled=true;
   try{
-    const res=await fetch(url+'/rest/v1/weeks?limit=1',{headers:{'apikey':key,'Authorization':'Bearer '+key}});
+    const isLegacy=key.startsWith('eyJ');
+    const testHeaders={'apikey':key};
+    if(isLegacy)testHeaders['Authorization']='Bearer '+key;
+    const res=await fetch(url+'/rest/v1/weeks?limit=1',{headers:testHeaders});
     if(!res.ok)throw new Error('HTTP '+res.status);
     localStorage.setItem('sb_url',url);localStorage.setItem('sb_key',key);
     setSyncOk();
