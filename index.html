@@ -152,6 +152,80 @@ body{background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacS
 .offline-banner{display:none;background:var(--amber-s);border-bottom:1px solid var(--amber);padding:8px 16px;font-size:12px;font-weight:600;color:var(--amber);text-align:center}
 .offline-banner.show{display:block}
 @media(min-width:480px){.overlay{align-items:center}.modal{border-radius:20px}}
+/* ── KID VIEW ── */
+body.kid-mode .app-nav{display:none}
+body.kid-mode .offline-banner{display:none!important}
+body.kid-mode .fab{display:none!important}
+body.kid-mode .overlay{display:none!important}
+.kid-view{display:none;min-height:100vh;padding-bottom:32px}
+body.kid-mode .kid-view{display:block}
+body.kid-mode #page-tracker,body.kid-mode #page-history{display:none!important}
+.kid-header{padding:28px 20px 16px;text-align:center}
+.kid-avatar{font-size:56px;display:block;margin-bottom:8px;animation:wave 2s ease-in-out infinite}
+@keyframes wave{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.kid-name{font-size:28px;font-weight:900;letter-spacing:-1px}
+.kid-week{font-size:13px;color:var(--muted);margin-top:2px}
+.kid-payout-card{margin:0 16px 20px;border-radius:20px;padding:20px 24px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden}
+.kid-payout-card::before{content:'';position:absolute;inset:0;opacity:0.12}
+.kid-payout-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.8}
+.kid-payout-amount{font-size:52px;font-weight:900;letter-spacing:-3px;line-height:1;font-variant-numeric:tabular-nums}
+.kid-payout-base{font-size:13px;opacity:0.7;margin-top:2px}
+.kid-prog-wrap{flex:1}
+.kid-prog-bar{height:12px;background:rgba(255,255,255,0.2);border-radius:99px;overflow:hidden;margin-bottom:6px}
+.kid-prog-fill{height:100%;background:rgba(255,255,255,0.8);border-radius:99px;transition:width 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+.kid-prog-stats{display:flex;justify-content:space-between;font-size:11px;opacity:0.8;font-weight:600}
+.kid-section{margin:0 16px 8px;max-width:608px;margin-left:auto;margin-right:auto}
+.kid-section-hdr{display:flex;align-items:center;gap:8px;padding:10px 4px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.kid-section-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+.kid-task-list{display:flex;flex-direction:column;gap:6px}
+.kid-task{display:flex;align-items:center;gap:12px;border-radius:14px;padding:13px 16px;border:1px solid var(--border);background:var(--surface)}
+.kid-task.done{background:var(--green-s);border-color:rgba(34,197,94,0.3)}
+.kid-task.missed{background:var(--red-s);border-color:rgba(239,68,68,0.3);opacity:0.7}
+.kid-task.earned{background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.35)}
+.kid-task.open{background:var(--surface2)}
+.kid-task-icon{font-size:20px;flex-shrink:0;width:32px;text-align:center}
+.kid-task-name{font-size:14px;font-weight:600;flex:1}
+.kid-task.missed .kid-task-name{text-decoration:line-through;color:var(--muted)}
+.kid-task-val{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.kid-task.done .kid-task-val{color:var(--green)}
+.kid-task.missed .kid-task-val{color:var(--red)}
+.kid-task.earned .kid-task-val{color:var(--amber)}
+.kid-task.open .kid-task-val{color:var(--muted)}
+.kid-refresh{display:block;margin:24px auto 0;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-size:13px;font-weight:600;padding:12px 24px;cursor:pointer}
+.kid-refresh:active{transform:scale(0.97)}
+/* ── KID SELECT ── */
+.kid-select-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.kid-select-title{font-size:22px;font-weight:900;margin-bottom:6px}
+.kid-select-sub{font-size:14px;color:var(--muted);margin-bottom:32px}
+.kid-select-grid{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:40px}
+.kid-select-btn{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--surface);border:2px solid var(--border);border-radius:20px;padding:20px 24px;cursor:pointer;transition:all 0.2s;min-width:110px}
+.kid-select-btn:active{transform:scale(0.96)}
+.kid-select-btn.p:hover,.kid-select-btn.p:focus{border-color:var(--purple);background:var(--purple-s)}
+.kid-select-btn.t:hover,.kid-select-btn.t:focus{border-color:var(--teal);background:var(--teal-s)}
+.kid-select-btn.a:hover,.kid-select-btn.a:focus{border-color:var(--amber);background:var(--amber-s)}
+.kid-select-emoji{font-size:40px}
+.kid-select-name{font-size:14px;font-weight:800}
+.kid-lock-btn{background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--subtle);font-size:12px;font-weight:600;padding:8px 16px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s;margin-top:8px}
+.kid-lock-btn:hover{border-color:var(--muted);color:var(--muted)}
+/* ── PIN MODAL (native-feeling) ── */
+.pin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.pin-overlay.open{display:flex}
+.pin-box{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:32px 28px;width:100%;max-width:320px;text-align:center;animation:slideUp 0.2s cubic-bezier(0.34,1.56,0.64,1)}
+.pin-title{font-size:18px;font-weight:900;margin-bottom:6px}
+.pin-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.pin-dots{display:flex;gap:14px;justify-content:center;margin-bottom:28px}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all 0.15s}
+.pin-dot.filled{background:var(--amber);border-color:var(--amber)}
+.pin-dot.error{background:var(--red);border-color:var(--red);animation:shake 0.3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.pin-key{background:var(--surface2);border:1px solid var(--border);border-radius:14px;font-size:22px;font-weight:700;padding:16px;cursor:pointer;transition:all 0.12s;color:var(--white)}
+.pin-key:active{transform:scale(0.93);background:var(--border)}
+.pin-key.zero{grid-column:2}
+.pin-cancel{background:transparent;border:none;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;padding:8px;width:100%}
+/* ── Parent lock icon in kid view ── */
+.kid-lock-corner{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;opacity:0.4;transition:opacity 0.2s;z-index:10}
+.kid-lock-corner:hover{opacity:0.9}
 </style>
 </head>
 <body>
@@ -211,6 +285,50 @@ body{background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacS
 </div>
 
 <div class="toast" id="toast" style="display:none"></div>
+<!-- KID CHILD SELECT SCREEN -->
+<div class="kid-view" id="kidSelectScreen">
+  <div class="kid-select-screen">
+    <div class="kid-select-title">👋 Who are you?</div>
+    <div class="kid-select-sub">Tap your name to see your week</div>
+    <div class="kid-select-grid" id="kidSelectGrid"></div>
+    <button class="kid-lock-btn" onclick="openPIN('parent')">🔒 Parent access</button>
+  </div>
+</div>
+
+<!-- KID TASK VIEW (after child selected) -->
+<div class="kid-view" id="kidView" style="display:none">
+  <div id="kidViewContent"></div>
+  <div class="kid-lock-corner" onclick="openPIN('parent')" title="Parent access">🔒</div>
+</div>
+
+<!-- PIN MODAL -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <div class="pin-title" id="pinTitle">🔒 Parent Access</div>
+    <div class="pin-sub" id="pinSub">Enter your PIN to continue</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key" onclick="pinKey('del')">⌫</button>
+      <button class="pin-key zero" onclick="pinKey('0')">0</button>
+    </div>
+    <button class="pin-cancel" onclick="closePIN()">Cancel</button>
+  </div>
+</div>
+
 
 <script>
 // ═══════════════════════════════════
@@ -218,6 +336,7 @@ body{background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacS
 // ═══════════════════════════════════
 if(typeof SUPABASE_URL==='undefined')window.SUPABASE_URL='';
 if(typeof SUPABASE_KEY==='undefined')window.SUPABASE_KEY='';
+if(typeof PARENT_PIN==='undefined')window.PARENT_PIN='1234';
 </script>
 <script>
 // ═══════════════════════════════════
@@ -843,25 +962,245 @@ function showToast(msg){
   _toastTimer=setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.style.display='none',300);},2800);
 }
 
+
 // ═══════════════════════════════════
-// INIT — pull latest from Supabase then render
+// KID VIEW
 // ═══════════════════════════════════
-async function init(){
-  renderTracker(); // render immediately from local state
-  // Button is always visible — label changes to reflect connection state
-  const lbl=document.getElementById('syncLabel');
-  if(lbl)lbl.textContent=hasSB()?'Edit Tasks':'Setup';
+function renderKidView(ci){
+  const c=CHILDREN[ci],s=cs(ci),col=COLORS[c.color];
+  const p=calcPayout(ci),pct=Math.round(p/c.budget*100),clampPct=Math.min(pct,100);
+  const bon=(c.bonuses||[]).filter(i=>s[i.id]==='earned').reduce((a,i)=>a+i.bonus,0);
+  const st=calcStats(ci);
+
+  let h=`<div class="kid-header">
+    <span class="kid-avatar">${c.emoji}</span>
+    <div class="kid-name">${c.name}</div>
+    <div class="kid-week">Week of ${fmtDate(weekState.weekStart||todayISO())}</div>
+  </div>`;
+
+  // Big payout card
+  h+=`<div class="kid-payout-card" style="background:linear-gradient(135deg,${col.main},${col.dark})">
+    <div>
+      <div class="kid-payout-label">This week</div>
+      <div class="kid-payout-amount">R${p}</div>
+      <div class="kid-payout-base">base R${c.budget}${bon>0?' + R'+bon+' bonus':''}</div>
+    </div>
+    <div class="kid-prog-wrap">
+      <div class="kid-prog-bar"><div class="kid-prog-fill" style="width:${clampPct}%"></div></div>
+      <div class="kid-prog-stats"><span>✅ ${st.done} done</span><span>❌ ${st.missed} missed</span></div>
+    </div>
+  </div>`;
+
+  // Chores
+  h+=`<div class="kid-section"><div class="kid-section-hdr">🧹 Chores</div><div class="kid-task-list">`;
+  c.chores.forEach(item=>{
+    const status=s[item.id]||'done';
+    const icon=status==='done'?'✅':'❌';
+    h+=`<div class="kid-task ${status}">
+      <div class="kid-task-icon">${icon}</div>
+      <div class="kid-task-name">${item.name}</div>
+      <div class="kid-task-val">${status==='missed'?'−R'+item.ded:'+R'+item.ded}</div>
+    </div>`;
+  });
+  h+=`</div></div>`;
+
+  // Behaviour
+  h+=`<div class="kid-section"><div class="kid-section-hdr">💛 Behaviour</div><div class="kid-task-list">`;
+  c.behaviours.forEach(item=>{
+    const status=s[item.id]||'done';
+    const icon=status==='done'?'✅':'❌';
+    h+=`<div class="kid-task ${status}">
+      <div class="kid-task-icon">${icon}</div>
+      <div class="kid-task-name">${item.name}</div>
+      <div class="kid-task-val">${status==='missed'?'−R'+item.ded:'+R'+item.ded}</div>
+    </div>`;
+  });
+  h+=`</div></div>`;
+
+  // Bonuses
+  if((c.bonuses||[]).length>0){
+    h+=`<div class="kid-section"><div class="kid-section-hdr">⭐ Bonus Points</div><div class="kid-task-list">`;
+    c.bonuses.forEach(item=>{
+      const status=s[item.id]||'open';
+      const icon=status==='earned'?'⭐':'🎯';
+      h+=`<div class="kid-task ${status}">
+        <div class="kid-task-icon">${icon}</div>
+        <div class="kid-task-name">${item.name}</div>
+        <div class="kid-task-val">${status==='earned'?'+R'+item.bonus:'R'+item.bonus}</div>
+      </div>`;
+    });
+    h+=`</div></div>`;
+  }
+
+  h+=`<button class="kid-refresh" onclick="kidRefresh()">↻ Refresh</button>`;
+
+  const kvc=document.getElementById('kidViewContent');if(kvc)kvc.innerHTML=h;
+}
+
+async function kidRefresh(ci){
   if(hasSB()){
-    setSyncBusy();
     try{
       await pullChildren();
       await pullWeekState();
       CHILDREN=loadChildren();
       weekState=loadWeekState();
-      renderTracker();
-      setSyncOk();
-    }catch(e){setSyncErr();}
+    }catch(e){}
   }
+  if(ci!==undefined)renderKidView(ci);
+}
+
+
+// ═══════════════════════════════════
+// PIN & SESSION
+// ═══════════════════════════════════
+const SESSION_KEY='at_parent_session';
+const SESSION_DURATION=30*60*1000; // 30 minutes
+let _sessionTimer=null;
+let _pinBuffer='';
+let _pinTarget='parent'; // always 'parent' now
+
+function getPin(){return String(window.PARENT_PIN||'1234');}
+
+function isSessionValid(){
+  try{
+    const s=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'{}');
+    return s.unlocked&&(Date.now()-s.ts)<SESSION_DURATION;
+  }catch(e){return false;}
+}
+function startSession(){
+  sessionStorage.setItem(SESSION_KEY,JSON.stringify({unlocked:true,ts:Date.now()}));
+  _sessionTimer=setTimeout(lockParent, SESSION_DURATION);
+}
+function lockParent(){
+  sessionStorage.removeItem(SESSION_KEY);
+  clearTimeout(_sessionTimer);
+  // If currently in parent mode, bounce back to kid select
+  if(document.body.classList.contains('parent-mode')){
+    switchToKidMode();
+    showToast('🔒 Session expired — locked');
+  }
+}
+function resetSessionTimer(){
+  clearTimeout(_sessionTimer);
+  _sessionTimer=setTimeout(lockParent, SESSION_DURATION);
+}
+
+// ── PIN UI ────────────────────────────────────────────────
+function openPIN(target){
+  _pinTarget=target||'parent';
+  _pinBuffer='';
+  updatePinDots(false);
+  document.getElementById('pinOverlay').classList.add('open');
+}
+function closePIN(){
+  _pinBuffer='';
+  document.getElementById('pinOverlay').classList.remove('open');
+  updatePinDots(false);
+}
+function pinKey(k){
+  if(k==='del'){_pinBuffer=_pinBuffer.slice(0,-1);}
+  else if(_pinBuffer.length<4){_pinBuffer+=k;}
+  updatePinDots(false);
+  if(_pinBuffer.length===4)setTimeout(checkPin,120);
+}
+function updatePinDots(error){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('pd'+i);
+    if(!d)return;
+    d.className='pin-dot'+(i<_pinBuffer.length?' filled':'')+(error?' error':'');
+  }
+}
+function checkPin(){
+  if(_pinBuffer===getPin()){
+    closePIN();
+    if(_pinTarget==='parent'){
+      startSession();
+      switchToParentMode();
+    }
+  }else{
+    updatePinDots(true);
+    setTimeout(()=>{_pinBuffer='';updatePinDots(false);},600);
+  }
+}
+
+// ── Mode switching ────────────────────────────────────────
+function switchToParentMode(){
+  document.body.classList.add('parent-mode');
+  document.body.classList.remove('kid-mode');
+  // Hide kid screens
+  document.getElementById('kidSelectScreen').style.display='none';
+  const kv=document.getElementById('kidView');if(kv)kv.style.display='none';
+  // Show parent screens
+  document.getElementById('page-tracker').style.display='';
+  document.querySelector('.app-nav').style.display='';
+  document.getElementById('fab').style.display='flex';
+  resetSessionTimer();
+  // Re-attach activity listener
+  document.addEventListener('touchstart',resetSessionTimer,{passive:true});
+  document.addEventListener('click',resetSessionTimer);
+  renderTracker();
+  const lbl=document.getElementById('syncLabel');
+  if(lbl)lbl.textContent=hasSB()?'Edit Tasks':'Setup';
+}
+function switchToKidMode(){
+  document.body.classList.add('kid-mode');
+  document.body.classList.remove('parent-mode');
+  document.getElementById('kidSelectScreen').style.display='';
+  const kv=document.getElementById('kidView');if(kv)kv.style.display='none';
+  document.removeEventListener('touchstart',resetSessionTimer);
+  document.removeEventListener('click',resetSessionTimer);
+  renderKidSelectScreen();
+}
+
+// ── Kid select screen ─────────────────────────────────────
+function renderKidSelectScreen(){
+  const grid=document.getElementById('kidSelectGrid');
+  if(!grid)return;
+  grid.innerHTML=CHILDREN.map((c,i)=>`
+    <button class="kid-select-btn ${c.color}" onclick="selectKid(${i})">
+      <span class="kid-select-emoji">${c.emoji}</span>
+      <span class="kid-select-name">${c.name}</span>
+    </button>`).join('');
+}
+function selectKid(ci){
+  document.getElementById('kidSelectScreen').style.display='none';
+  const kv=document.getElementById('kidView');
+  if(kv)kv.style.display='block';
+  renderKidView(ci);
+}
+// ═══════════════════════════════════
+// INIT — pull latest from Supabase then render
+// ═══════════════════════════════════
+async function init(){
+  // Always start in kid mode — PIN required to unlock parent
+  document.body.classList.add('kid-mode');
+
+  // Pull latest data first so kid screen is fresh
+  if(hasSB()){
+    try{
+      await pullChildren();
+      await pullWeekState();
+      CHILDREN=loadChildren();
+      weekState=loadWeekState();
+    }catch(e){}
+  }
+
+  // If session is still valid (parent recently unlocked), go straight to parent
+  if(isSessionValid()){
+    switchToParentMode();
+    return;
+  }
+
+  // Show kid select screen
+  renderKidSelectScreen();
+
+  // Auto-refresh every 60s while in kid mode
+  setInterval(async()=>{
+    if(!document.body.classList.contains('parent-mode')){
+      await kidRefresh();
+      renderKidSelectScreen();
+    }
+  },60000);
 }
 init();
 </script>
